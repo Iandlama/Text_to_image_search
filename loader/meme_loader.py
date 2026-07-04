@@ -8,10 +8,15 @@ from io import BytesIO
 from tqdm.auto import tqdm
 import ssl
 
+from meme_utils import parse_caption
+
 # Отключаем проверку SSL, если Hugging Face ругается
 ssl._create_default_https_context = ssl._create_unverified_context
 
-OUTPUT_DIR = 'meme_dataset'
+# Пути привязаны к корню проекта (папка над loader/), а не к cwd —
+# скрипт можно запускать из любого места.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'meme_dataset')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # --- НАСТРОЙКИ РАЗДЕЛЬНОГО ЗИПИРОВАНИЯ ---
@@ -27,7 +32,9 @@ ds = load_dataset("Leonardo6/memecap", split="train", streaming=True)
 print("Датасет загружен. Начинаем обработку...")
 
 
-def close_current_chunk(zip_obj, lines, idx):
+def close_current_chunk(
+    zip_obj: zipfile.ZipFile | None, lines: list[str], idx: int
+) -> None:
     """Вшивает метадату внутрь архива и закрывает его."""
     if zip_obj is not None:
         # Сохраняем metadata.jsonl прямо в корень текущего архива
@@ -56,8 +63,9 @@ try:
             current_zip = zipfile.ZipFile(
                 zip_path, 'w', compression=zipfile.ZIP_DEFLATED)
 
-        # Забираем готовый текст/описание из датасета
-        caption = item.get('messages', "")
+        # Забираем сырые messages и парсим их в чистые поля для поиска
+        messages = item.get('messages', "")
+        title, image_desc, meaning = parse_caption(messages)
 
         # Конвертируем картинку в WEBP прямо в оперативной памяти
         img_byte_arr = BytesIO()
@@ -74,7 +82,9 @@ try:
         # Формируем строку метаданных для текущего архива
         entry = {
             "id": img_hash,
-            "caption": caption
+            "title": title,
+            "image_desc": image_desc,
+            "meaning": meaning,
         }
         metadata_lines.append(json.dumps(entry, ensure_ascii=False))
 

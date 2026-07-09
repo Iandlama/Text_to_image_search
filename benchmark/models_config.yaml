@@ -1,0 +1,186 @@
+# ============================================================================
+# models_config.yaml - конфиг бенчмарка (Этап 2.5: выбор текстового энкодера)
+# ============================================================================
+#
+# Все модели ниже - офлайн (self-hosted, HuggingFace веса), совместимо с
+# требованием "frozen модели, без переобучения". Целевая размерность вектора -
+# 512 (или меньше). Модели с native_dim > target_dim обрезаются (projection_method:
+# truncate) - корректно для моделей, специально обученных с Matryoshka Representation
+# Learning (MRL, помечены ниже), и является приемлемым fallback-ом для остальных
+# (тем же способом, что уже реализован в BaseEmbedder._project).
+
+dataset:
+  metadata_path: "./shit/Text_to_image_search/meme_dataset/metadata.jsonl"
+  images_dir: "./shit/Text_to_image_search/meme_dataset/images"
+  image_ext: "webp"     # расширение картинок в images_dir ({id}.{image_ext})
+  sample_size: 300      # сколько случайных мемов брать из датасета (не весь датасет)
+  seed: 42
+
+augmentation:
+  enabled: true
+  fraction: 0.25        # доля мемов, которые превращаем в "плохое качество"
+  cycles: 6             # сколько раз подряд имитируем пересохранение в JPEG
+  quality_min: 5
+  quality_max: 30
+  seed: 123
+
+cache_dir: "./.benchmark_cache"     # OCR / деградированные картинки / эмбеддинги
+output_dir: "./benchmark_output"    # csv / markdown / png-графики
+batch_size: 32
+
+models:
+  # ---- уже присутствовали в основном models.yaml пайплайна (Вариант A/B) ----
+  - name: multilingual-e5-large
+    hf_id: intfloat/multilingual-e5-large
+    embedder_type: text
+    native_dim: 1024
+    target_dim: 512
+    query_prefix: "query: "
+    passage_prefix: "passage: "
+    max_length: 512
+    notes: "Базовая модель, уже в проде (Вариант B, текстовый хвост)."
+
+  - name: bge-m3
+    hf_id: BAAI/bge-m3
+    embedder_type: text
+    native_dim: 1024
+    target_dim: 512
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 8192
+    notes: "Уже в проде; хорошо работает с длинными rich_description."
+
+  # ---- новые кандидаты: более лёгкие/быстрые e5/bge варианты ----
+  - name: multilingual-e5-base
+    hf_id: intfloat/multilingual-e5-base
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    query_prefix: "query: "
+    passage_prefix: "passage: "
+    max_length: 512
+
+  - name: multilingual-e5-small
+    hf_id: intfloat/multilingual-e5-small
+    embedder_type: text
+    native_dim: 384
+    target_dim: 384      # меньше 512 - не обрезаем, берём как есть
+    query_prefix: "query: "
+    passage_prefix: "passage: "
+    max_length: 512
+    notes: "Самая лёгкая/быстрая из e5 - baseline 'дёшево и сердито'."
+
+  - name: bge-base-en-v1.5
+    hf_id: BAAI/bge-base-en-v1.5
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    query_prefix: "Represent this sentence for searching relevant passages: "
+    passage_prefix: ""
+    max_length: 512
+
+  - name: bge-small-en-v1.5
+    hf_id: BAAI/bge-small-en-v1.5
+    embedder_type: text
+    native_dim: 384
+    target_dim: 384
+    query_prefix: "Represent this sentence for searching relevant passages: "
+    passage_prefix: ""
+    max_length: 512
+
+  # ---- модели с настоящей Matryoshka Representation Learning (MRL) ----
+  # у них truncate - не хак, а штатный режим работы, качество деградирует плавно
+  - name: embeddinggemma-300m
+    hf_id: google/embeddinggemma-300m
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    query_prefix: "task: search result | query: "
+    passage_prefix: "title: none | text: "
+    max_length: 2048
+    notes: "MRL: 768->512/256/128. Мультиязычная, компактная (300M)."
+
+  - name: nomic-embed-text-v1.5
+    hf_id: nomic-ai/nomic-embed-text-v1.5
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    trust_remote_code: true
+    query_prefix: "search_query: "
+    passage_prefix: "search_document: "
+    max_length: 8192
+    notes: "MRL, длинный контекст (до 8192 токенов) - на будущее для длинных описаний."
+
+  - name: jina-embeddings-v3
+    hf_id: jinaai/jina-embeddings-v3
+    embedder_type: text
+    native_dim: 1024
+    target_dim: 512
+    trust_remote_code: true
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 8192
+    notes: "MRL + 'late chunking'. Требует свежий transformers (проверить совместимость, см. requirements.txt)."
+
+  - name: mxbai-embed-large-v1
+    hf_id: mixedbread-ai/mxbai-embed-large-v1
+    embedder_type: text
+    native_dim: 1024
+    target_dim: 512
+    query_prefix: "Represent this sentence for searching relevant passages: "
+    passage_prefix: ""
+    max_length: 512
+    notes: "MRL + бинарная квантизация (тут не используем квантизацию, только truncate)."
+
+  # ---- мультиязычные универсальные энкодеры (не MRL, честный truncate-fallback) ----
+  - name: gte-multilingual-base
+    hf_id: Alibaba-NLP/gte-multilingual-base
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    trust_remote_code: true
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 8192
+
+  - name: paraphrase-multilingual-mpnet
+    hf_id: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 128
+    notes: "Старый, но стабильный baseline - полезен как 'нижняя граница' качества."
+
+  - name: labse
+    hf_id: sentence-transformers/LaBSE
+    embedder_type: text
+    native_dim: 768
+    target_dim: 512
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 256
+    notes: "Хорош для мемов с сильным смешением языков в OCR/заголовках."
+
+  # ---- CLIP-подобные (текстовая башня, для сравнения с Вариантом A) ----
+  - name: jina-clip-v2-text
+    hf_id: jinaai/jina-clip-v2
+    embedder_type: clip
+    native_dim: 1024
+    target_dim: 512
+    trust_remote_code: true
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 512
+    notes: "Уже в models.yaml пайплайна как Вариант A; здесь для контрольного сравнения A vs B."
+
+  - name: clip-vit-base-patch32-text
+    hf_id: openai/clip-vit-base-patch32
+    embedder_type: clip
+    native_dim: 512
+    target_dim: 512
+    query_prefix: ""
+    passage_prefix: ""
+    max_length: 77
+    notes: "Классический CLIP, нативно уже 512 - самый дешёвый baseline Варианта A."

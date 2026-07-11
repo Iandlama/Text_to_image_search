@@ -8,11 +8,11 @@ For the baseline iteration, the database is configured to support **Multi-Vector
 
 *   **Collection Name:** `meme_collection_v1`
 *   **Vector 1: `vector_image`**
-    *   **Model:** `jina-clip-v2` (via Task 2)
+    *   **Model:** `jina-clip-v2` 
     *   **Dimension:** `512` (Truncated)
     *   **Distance Metric:** `Cosine Similarity`
 *   **Vector 2: `vector_text`**
-    *   **Model:** `multilingual-e5-large` (via Task 2)
+    *   **Model:** `multilingual-e5-large` 
     *   **Dimension:** `512` (Truncated)
     *   **Distance Metric:** `Cosine Similarity`
 

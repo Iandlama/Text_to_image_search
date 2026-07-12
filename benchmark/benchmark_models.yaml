@@ -1,0 +1,185 @@
+# benchmark_models.yaml
+# Candidate offline (open-source) multimodal embedding models + run settings.
+# Every model is image↔text (no text-only encoders). embedding_dim is unified to
+# 512 for a fair apples-to-apples comparison; `matryoshka: true` means truncation
+# to 512 is safe, `false` means it is lossy (a warning is logged) - kept anyway
+# because 512 is the desired target. Flip `enabled` to include heavier models.
+
+target_dim: 512
+
+dataset:
+  path: /mnt/d/Programming/innopolis/dlis-emb/shit/Text_to_image_search/meme_dataset             # folder with metadata.jsonl + images/{id}.webp
+  image_dir: images
+  image_ext: webp
+  n_samples: 200             # randomly sampled (seeded); NOT the whole set
+  seed: 42
+  query_field: meaning       # query is generated from this metadata field
+
+run:
+  channels: [image, ocr, fused]   # which corpus representations to build
+  fused_alpha: 0.5                 # fused = normalize(a*image + (1-a)*ocr)
+  ks: [1, 5, 10]
+  ndcg_k: 10
+  cache_dir: ./bench_cache         # OCR + embeddings are cached here
+  out_dir: ./bench_results
+  tests:                           # default tests to run (override with --only)
+    - text2image
+    - text2ocr
+    - text2fused
+    - space_consistency
+    - jpeg_robustness
+  augmentation:                    # "bad quality memes" (repeated JPEG recompress)
+    jpeg_qualities: [50, 30, 15, 8]
+    n_recompress: 3
+    downscale: 0.5                 # downscale->upscale before recompression (repost sim)
+
+models:
+
+  # ================= enabled by default: fast ~512-dim baselines =============
+  clip-openai-b32:
+    type: clip
+    model_name: openai/clip-vit-base-patch32
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
+
+  clip-openai-b16:
+    type: clip
+    model_name: openai/clip-vit-base-patch16
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
+
+  laion-clip-b32:
+    type: clip
+    model_name: laion/CLIP-ViT-B-32-laion2B-s34B-b79K
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
+
+  metaclip-b32:
+    type: clip
+    model_name: facebook/metaclip-b32-400m
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
+
+  siglip-b16-224:
+    type: clip
+    model_name: google/siglip-base-patch16-224
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 768
+    matryoshka: false
+    padding: max_length
+    max_text_length: 64
+    enabled: true
+
+  siglip2-b16-256:
+    type: clip
+    model_name: google/siglip2-base-patch16-256
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 768
+    matryoshka: false
+    padding: max_length
+    max_text_length: 64
+    enabled: true
+
+  # Multilingual + Matryoshka -> clean 512. Strong meme baseline (mixed languages).
+  jina-clip-v2:
+    type: clip
+    model_name: jinaai/jina-clip-v2
+    api: encode_methods
+    embedding_dim: 512
+    native_dim: 1024
+    matryoshka: true
+    trust_remote_code: true
+    enabled: true
+
+  jina-clip-v1:
+    type: clip
+    model_name: jinaai/jina-clip-v1
+    api: encode_methods
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    trust_remote_code: true
+    enabled: true
+
+  # ================= opt-in: larger / heavier (set enabled: true) ============
+  clip-openai-l14:
+    type: clip
+    model_name: openai/clip-vit-large-patch14
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 768
+    matryoshka: false
+    enabled: false
+
+  laion-clip-h14:
+    type: clip
+    model_name: laion/CLIP-ViT-H-14-laion2B-s32B-b79K
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 1024
+    matryoshka: false
+    enabled: false
+
+  metaclip2-huge:                  # multilingual "worldwide" MetaCLIP 2 (CC-BY-NC)
+    type: clip
+    model_name: facebook/metaclip-2-worldwide-huge-quickgelu
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 1024
+    matryoshka: false
+    enabled: false
+
+  # ---- multimodal single-space VLM embedders (R&D; heavier, need more VRAM) ----
+  gme-qwen2-vl-2b:                 # Alibaba GME (Qwen2-VL) multimodal embedder
+    type: multimodal
+    model_name: Alibaba-NLP/gme-Qwen2-VL-2B-Instruct
+    api: vlm_pool
+    embedding_dim: 512
+    native_dim: 1536
+    matryoshka: false
+    trust_remote_code: true
+    pooling: last
+    enabled: false
+
+  jina-embeddings-v4:              # Qwen2.5-VL-based, Matryoshka, multilingual
+    type: clip
+    model_name: jinaai/jina-embeddings-v4
+    api: encode_methods
+    embedding_dim: 512
+    native_dim: 2048
+    matryoshka: true
+    trust_remote_code: true
+    enabled: false
+
+  e5-v:                            # LLaVA-based unified multimodal embedder
+    type: multimodal
+    model_name: royokong/e5-v
+    api: vlm_pool
+    embedding_dim: 512
+    native_dim: 4096
+    matryoshka: false
+    pooling: last
+    enabled: false
+
+  gemma-mm:                        # Gemma-3 VLM, mean-pooled (fused meme vector)
+    type: multimodal
+    model_name: google/gemma-3-4b-it
+    api: vlm_pool
+    embedding_dim: 512
+    matryoshka: false
+    pooling: mean
+    enabled: false

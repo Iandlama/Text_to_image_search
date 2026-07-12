@@ -1,95 +1,78 @@
-# models.yaml
-# ===========
-# Декларативные пресеты моделей для meme_embeddings.
-# Каждый пресет собирается в EmbedderConfig через config.py:load_presets_from_yaml().
+# Model registry for the meme-embedding library.
+# Point the library at this file via MEME_EMBEDDER_CONFIG=/path/to/models.yaml
+# or load_embedder(name, registry_path="models.yaml").
 #
-# trust_remote_code указывается ЯВНО для каждой модели - модели с кастомным кодом
-# на HF Hub (jina-clip-v2, bge-m3 с некоторыми ревизиями и т.п.) требуют true,
-# стандартные модели transformers/sentence-transformers - false.
-#
-# revision - опционально, пин на конкретный commit/tag модели на HF Hub.
-# Рекомендуется фиксировать после первого успешного запуска в проде (воспроизводимость).
+# Every model here is multimodal (image + text share a space). No text-only models,
+# by design: the primary target is the image embedding, and OCR is handled by the
+# same model's text tower so both vectors are directly comparable.
 
-presets:
+default_model: clip-jina-v2
 
-  jina-clip-v2:
-    embedder_type: clip
-    model:
-      name: jina-clip-v2
-      hf_id: jinaai/jina-clip-v2
-      native_dim: 1024
-      max_length: 77
-      device: cpu
-      dtype: float32
-      trust_remote_code: true
-      revision: null           # зафиксируйте конкретный commit после проверки совместимости
-    projection:
-      enabled: true
-      target_dim: 512
-      method: truncate
-    model_version: "jina-clip-v2@1"
-    preprocessing_version: "v1"
+models:
 
-  multilingual-e5-large:
-    embedder_type: text
-    model:
-      name: multilingual-e5-large
-      hf_id: intfloat/multilingual-e5-large
-      native_dim: 1024
-      max_length: 512
-      device: cpu
-      dtype: float32
-      trust_remote_code: false
-      query_prefix: "query: "
-      passage_prefix: "passage: "
-    projection:
-      enabled: true
-      target_dim: 512
-      method: truncate
-    model_version: "me5-large@1"
-    preprocessing_version: "v1"
+  # ---- Recommended baseline -------------------------------------------------
+  # Multilingual CLIP with Matryoshka embeddings -> clean 256 / 512 for free.
+  clip-jina-v2:
+    type: clip                    # -> ClipEmbedder
+    model_name: jinaai/jina-clip-v2
+    api: encode_methods           # jina exposes .encode_image / .encode_text
+    embedding_dim: 512            # target output dim (try 256 to halve index size)
+    native_dim: 1024
+    matryoshka: true              # truncation is safe on this model
+    normalize: true
+    trust_remote_code: true
+    max_text_length: 77
 
-  bge-m3:
-    embedder_type: text
-    model:
-      name: bge-m3
-      hf_id: BAAI/bge-m3
-      native_dim: 1024
-      max_length: 512
-      device: cpu
-      dtype: float32
-      trust_remote_code: false
-    projection:
-      enabled: true
-      target_dim: 256
-      method: truncate
-    model_version: "bge-m3@1"
-    preprocessing_version: "v1"
+  clip-openai-b16:
+    type: clip
+    model_name: openai/clip-vit-base-patch16
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
 
-  gemma-caption+e5:
-    embedder_type: multimodal
-    model:
-      name: multilingual-e5-large
-      hf_id: intfloat/multilingual-e5-large
-      native_dim: 1024
-      max_length: 512
-      device: cpu
-      dtype: float32
-      trust_remote_code: false
-      query_prefix: "query: "
-      passage_prefix: "passage: "
-    caption_model:
-      name: gemma-3-4b-it
-      hf_id: google/gemma-3-4b-it
-      native_dim: 0
-      device: cpu
-      dtype: bfloat16
-      trust_remote_code: false
-    projection:
-      enabled: true
-      target_dim: 512
-      method: truncate
-    caption_max_new_tokens: 200
-    caption_temperature: 0.0
-    model_version: "gemma3-4b-it+me5-large@1"
-    preprocessing_version: "v1"
+  # ---- Lightweight English CLIP (great default for smoke tests) -------------
+  clip-openai-b32:
+    type: clip
+    model_name: openai/clip-vit-base-patch32
+    api: clip_features            # get_image_features / get_text_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    normalize: true
+
+  # ---- SigLIP2 (strong image/text space) ------------------------------------
+  siglip2-256:
+    type: clip
+    model_name: google/siglip2-base-patch16-256
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 768
+    matryoshka: false
+    padding: max_length           # SigLIP requires fixed-length padding
+    max_text_length: 64
+    normalize: true
+
+  # ---- R&D: single fused multimodal space (Gemma-style VLM) -----------------
+  gemma-mm-3:
+    type: multimodal              # -> MultimodalEmbedder (mean-pooled hidden states)
+    model_name: google/gemma-3-8b-it
+    api: vlm_pool
+    embedding_dim: 512
+    matryoshka: false
+    pooling: mean                 # "mean" | "last"
+    max_text_length: 128
+    image_prompt: "A meme image."
+    normalize: true
+    # Image inputs go through the processor chat template (correct image-token
+    # expansion). Override the loader class if needed:
+    # model_class: AutoModelForImageTextToText   # default try order; then AutoModel
+
+  # ---- Template for your own custom model -----------------------------------
+  # my-custom-model:
+  #   type: clip                  # or "multimodal"
+  #   model_name: your-org/your-clip-model
+  #   api: clip_features
+  #   embedding_dim: 512
+  #   trust_remote_code: false

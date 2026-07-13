@@ -14,14 +14,9 @@ def setup_meme_collection():
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config={
-            "vector_image": VectorParams(
-                size=512,
-                distance=Distance.COSINE
-            ),
-            "vector_text": VectorParams(
-                size=512,
-                distance=Distance.COSINE
-            )
+            "vector_image": VectorParams(size=512, distance=Distance.COSINE),
+
+            "vector_text": VectorParams(size=512, distance=Distance.COSINE)
         }
     )
     print(f"Collection '{COLLECTION_NAME}' has successfully created!")

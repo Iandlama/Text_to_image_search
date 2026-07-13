@@ -29,7 +29,7 @@ Example:
 
 ## Vector Database Setup & Ingestion (Qdrant)
 
-The vector storage, named-vector schema configuration, and high-throughput ingestion pipeline are handled via **Qdrant** (Task 3). The database runs locally inside a Docker container and communicates using the high-performance gRPC protocol (`port 6334`) to safely scale up to the mandatory 500,000+ objects constraint [].
+The vector storage, named-vector schema configuration, and high-throughput ingestion pipeline are handled via **Qdrant**. The database runs locally inside a Docker container and communicates using the high-performance gRPC protocol (`port 6334`) to safely scale up to the mandatory 500,000+ objects constraint.
 
 ### Schema Configuration (Iteration 1: Baseline)
 The collection `meme_collection_v1` is configured to support **Multi-Vector Search**, indexing two separate dense vector fields per node into an interconnected coordinate space:
@@ -38,7 +38,7 @@ The collection `meme_collection_v1` is configured to support **Multi-Vector Sear
 *   **`vector_text`**: Size `512`, `Distance.COSINE` (OCR text embeddings from `clip-jina-v2`).
 
 ### Payload & ID Translation
-Qdrant does not natively accept raw string hashes as structural point IDs []. To bridge Task 1's MD5 hashes with Qdrant requirements, the ingestion pipeline dynamically converts string IDs into deterministic **UUID v5** formats []. 
+Qdrant does not natively accept raw string hashes as structural point IDs. To bridge Task 1's MD5 hashes with Qdrant requirements, the ingestion pipeline dynamically converts string IDs into deterministic **UUID v5** formats. 
 The corresponding payload includes:
 *   `ocr_text`: Text extracted from the image.
 *   `file_name`: Path to the local asset (e.g., `<hash>.webp`).
@@ -56,7 +56,7 @@ The corresponding payload includes:
    ```powershell
    docker run -p 6333:6333 -p 6334:6334 -v C:\qdrant_storage:/qdrant/storage:z qdrant/qdrant
    ```
-   *Dashboard can be monitored at `http://localhost:6333/dashboard`* []
+   *Dashboard can be monitored at `http://localhost:6333/dashboard`* 
 
 2. **Initialize Environment & Schema**:
    ```powershell

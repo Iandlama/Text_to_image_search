@@ -2,3 +2,6 @@ easyocr
 datasets
 Pillow
 tqdm
+qdrant-client>=1.10.0   
+pandas>=2.2.0           
+pyarrow>=15.0.0   

@@ -2,9 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /workspace
 
-# Системные зависимости
+# Системные зависимости (добавлен curl)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential && rm -rf /var/lib/apt/lists/*
+    build-essential curl && rm -rf /var/lib/apt/lists/*
 
 # 1. Обновляем pip
 RUN pip install --no-cache-dir --upgrade pip
@@ -28,10 +28,17 @@ RUN pip install --no-cache-dir -U \
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/workspace
 
-# Копируем код
+# Копируем код приложения и автоматизации
 COPY app/ ./app/
 COPY meme_embed/ ./meme_embed/
+COPY init_db.py .
+COPY upload_data.py .
+COPY entrypoint.sh .
+
+# Даем права на выполнение скрипта автоматизации
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["python", "-m", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Точка входа теперь запускает наш сценарий
+ENTRYPOINT ["./entrypoint.sh"]

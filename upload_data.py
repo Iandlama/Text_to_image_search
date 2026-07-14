@@ -5,11 +5,13 @@ import pandas as pd
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+client = QdrantClient(host=QDRANT_HOST, grpc_port=6334, prefer_grpc=True)
+
+COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "meme_collection_v1")
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARQUET_FILE_PATH = os.path.join(CURRENT_DIR, "data", "embeddings_v1.parquet")
-
-client = QdrantClient(host="localhost", grpc_port=6334, prefer_grpc=True)
-COLLECTION_NAME = "meme_collection_v1"
 
 NAMESPACE_MEMES = uuid.UUID('12345678-1234-5678-1234-567812345678')
 

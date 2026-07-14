@@ -1,28 +1,34 @@
+version: '3.8'
+
 services:
-  qdrant:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meme_search_api
+    ports:
+      - "8000:8000"
+    environment:
+      - QDRANT_HOST=qdrant_db
+      - QDRANT_GRPC_PORT=6334
+      - QDRANT_COLLECTION=meme_collection_v1
+    volumes:
+      # Кэшируем модель на хост-машине, чтобы не скачивать 2.4 ГБ каждый раз
+      - hf_cache:/root/.cache/huggingface
+      # Монтируем всю папку data (в ней окажутся и images/, и embeddings_v1.parquet)
+      - ./data:/workspace/data
+    depends_on:
+      - qdrant_db
+
+  qdrant_db:
     image: qdrant/qdrant:latest
     container_name: qdrant_db
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - hf_cache:/root/.cache/huggingface
-      - qdrant_storage:/qdrant/storage
-    restart: always
-
-  backend:
-    build: .
-    container_name: meme_search_api
-    ports:
-      - "8000:8000"
-    environment:
-      - QDRANT_HOST=qdrant
-      - HF_HUB_DISABLE_SYMLINKS_WARNING=1
-    volumes:
-      - ./data/images:/workspace/data/images
-    depends_on:
-      - qdrant
-    restart: always
+      - qdrant_data:/qdrant/storage
 
 volumes:
-  qdrant_storage:
+  hf_cache:
+  qdrant_data:

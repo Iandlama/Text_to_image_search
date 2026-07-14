@@ -1,9 +1,11 @@
+import os
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-client = QdrantClient(host="localhost", grpc_port=6334, prefer_grpc=True)
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+client = QdrantClient(host=QDRANT_HOST, grpc_port=6334, prefer_grpc=True)
 
-COLLECTION_NAME = "meme_collection_v1"
+COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "meme_collection_v1")
 
 
 def setup_meme_collection():

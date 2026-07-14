@@ -16,7 +16,7 @@ models:
     type: clip                    # -> ClipEmbedder
     model_name: jinaai/jina-clip-v2
     api: encode_methods           # jina exposes .encode_image / .encode_text
-    embedding_dim: 512            # target output dim (try 256 to halve index size)
+    embedding_dim: 256            # target output dim (try 256 to halve index size)
     native_dim: 1024
     matryoshka: true              # truncation is safe on this model
     normalize: true

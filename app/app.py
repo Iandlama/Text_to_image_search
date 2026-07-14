@@ -1,5 +1,6 @@
 import os
 import sys
+import numpy as np
 
 # настройка относительных путей
 #CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -72,6 +73,15 @@ def weighted_sum_fusion(visual_hits, text_hits, alpha: float = WEIGHTED_ALPHA, t
         for item in sorted_candidates[:top_n]
     ]
 
+def quantize_to_int8(x: np.ndarray) -> np.ndarray:
+    MAT_SHRINK = 256
+    absmax = np.abs(x).max()
+    scale = absmax / 127.0 if absmax != 0 else 1.0
+    quantized = np.clip(np.round(x / scale), -128, 127).astype(np.int8)[:MAT_SHRINK]
+    
+    return quantized
+
+
 # ----------------------------- Настройка endpoints ---------------------------------
 
 # Поиск по документам (картинкам) - без отображения изображений
@@ -97,12 +107,15 @@ async def search_memes(
                 query_features = meme_embedder.model.encode_text([cleaned_query], **kw)
             
             query_vector = meme_embedder._postprocess(query_features, normalize=True)[0].tolist()
+            query_vector = quantize_to_int8(query_vector)
             text_query_vector = query_vector
             visual_query_vector = query_vector
         else:
             vector = meme_embedder.encode_text(cleaned_query)
             text_query_vector = vector.tolist()
+            text_query_vector = quantize_to_int8(text_query_vector)
             visual_query_vector = vector.tolist()
+            visual_query_vector = quantize_to_int8(visual_query_vector)
 
         # Поиск по визуальному признаку
         visual_res = qdrant_client.query_points(
@@ -158,12 +171,15 @@ async def search_memes_visual(
             with torch.inference_mode():
                 query_features = meme_embedder.model.encode_text([cleaned_query], **kw)
             query_vector = meme_embedder._postprocess(query_features, normalize=True)[0].tolist()
+            query_vector = quantize_to_int8(query_vector)
             text_query_vector = query_vector
             visual_query_vector = query_vector
         else:
             vector = meme_embedder.encode_text(cleaned_query)
             text_query_vector = vector.tolist()
+            text_query_vector = quantize_to_int8(text_query_vector)
             visual_query_vector = vector.tolist()
+            visual_query_vector = quantize_to_int8(visual_query_vector)
 
         visual_res = qdrant_client.query_points(
             collection_name=COLLECTION_NAME, query=visual_query_vector, using="vector_image", limit=20, with_payload=True

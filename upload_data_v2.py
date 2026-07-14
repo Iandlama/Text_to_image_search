@@ -6,7 +6,7 @@ from qdrant_client.models import PointStruct
 
 
 client = QdrantClient(host="localhost", grpc_port=6334, prefer_grpc=True)
-COLLECTION_NAME = "meme_collection_v1"
+COLLECTION_NAME = "meme_collection_v2"
 
 NAMESPACE_MEMES = uuid.UUID('12345678-1234-5678-1234-567812345678')
 
@@ -67,5 +67,5 @@ def upload_parquet_dataset(parquet_path, batch_size=1000):
 
 
 if __name__ == "__main__":
-    PARQUET_FILE = "embeddings_v1.parquet"
+    PARQUET_FILE = "embeddings_v2.parquet"
     upload_parquet_dataset(PARQUET_FILE)

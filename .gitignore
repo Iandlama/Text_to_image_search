@@ -2,3 +2,16 @@ meme_dataset/
 *.zip
 .DS_Store
 __pycache__/
+.venv/
+venv/
+ENV/
+*.pyc
+
+qdrant_storage/
+
+*.parquet
+*.jsonl
+*.csv
+*.zip
+Thumbs.db
+Desktop.ini

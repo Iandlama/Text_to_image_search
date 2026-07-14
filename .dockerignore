@@ -1,0 +1,12 @@
+# Игнорируем всё, что не нужно в образе
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.env
+.vscode
+.idea
+data/images/
+venv/
+env/

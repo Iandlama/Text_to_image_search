@@ -24,6 +24,12 @@ Example:
 * `loader/meme_utils.py` — `parse_caption()`: parses the raw memecap prompt into `title` / `image_desc` / `meaning` fields.
 * `loader/migrate_metadata.py` — rebuilds `metadata.jsonl` inside an already-downloaded archive to the new schema (no re-download).
 
+## Links to datasets
+
+* [ImgFlip575K](https://github.com/schesa/ImgFlip575K_Dataset) — ~497k imgflip memes, the bulk of the corpus (sliced by top-votes per template).
+* [MemeCap (Reddit memes)](https://huggingface.co/datasets/Leonardo6/memecap) — Reddit-sourced memes with human descriptions ([paper](https://arxiv.org/abs/2305.13703)).
+* [Personal set](https://drive.google.com/drive/folders/1MPyKrUmvke2EovNUxj-jUhPkCYpe7PcW?usp=sharing) — collected by the team.
+
 ## Meme Embedding & Benchmark
 
 ### `meme_embed/` - Embedding library

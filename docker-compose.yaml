@@ -6,6 +6,7 @@ services:
       - "6333:6333"
       - "6334:6334"
     volumes:
+      - hf_cache:/root/.cache/huggingface
       - qdrant_storage:/qdrant/storage
     restart: always
 

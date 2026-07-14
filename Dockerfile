@@ -24,11 +24,13 @@ RUN sed -i '/torch/d' requirements.txt && \
 RUN pip install --no-cache-dir -U \
     huggingface_hub "transformers==4.43.3" accelerate fastapi uvicorn jinja2 timm einops Pillow
 
+# Включаем мгновенный вывод логов без задержек и буферизации
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/workspace
+
 # Копируем код
 COPY app/ ./app/
 COPY meme_embed/ ./meme_embed/
-
-ENV PYTHONPATH=/workspace
 
 EXPOSE 8000
 

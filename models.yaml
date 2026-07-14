@@ -1,0 +1,78 @@
+# Model registry for the meme-embedding library.
+# Point the library at this file via MEME_EMBEDDER_CONFIG=/path/to/models.yaml
+# or load_embedder(name, registry_path="models.yaml").
+#
+# Every model here is multimodal (image + text share a space). No text-only models,
+# by design: the primary target is the image embedding, and OCR is handled by the
+# same model's text tower so both vectors are directly comparable.
+
+default_model: clip-jina-v2
+
+models:
+
+  # ---- Recommended baseline -------------------------------------------------
+  # Multilingual CLIP with Matryoshka embeddings -> clean 256 / 512 for free.
+  clip-jina-v2:
+    type: clip                    # -> ClipEmbedder
+    model_name: jinaai/jina-clip-v2
+    api: encode_methods           # jina exposes .encode_image / .encode_text
+    embedding_dim: 512            # target output dim (try 256 to halve index size)
+    native_dim: 1024
+    matryoshka: true              # truncation is safe on this model
+    normalize: true
+    trust_remote_code: true
+    max_text_length: 77
+
+  clip-openai-b16:
+    type: clip
+    model_name: openai/clip-vit-base-patch16
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    enabled: true
+
+  # ---- Lightweight English CLIP (great default for smoke tests) -------------
+  clip-openai-b32:
+    type: clip
+    model_name: openai/clip-vit-base-patch32
+    api: clip_features            # get_image_features / get_text_features
+    embedding_dim: 512
+    native_dim: 512
+    matryoshka: false
+    normalize: true
+
+  # ---- SigLIP2 (strong image/text space) ------------------------------------
+  siglip2-256:
+    type: clip
+    model_name: google/siglip2-base-patch16-256
+    api: clip_features
+    embedding_dim: 512
+    native_dim: 768
+    matryoshka: false
+    padding: max_length           # SigLIP requires fixed-length padding
+    max_text_length: 64
+    normalize: true
+
+  # ---- R&D: single fused multimodal space (Gemma-style VLM) -----------------
+  gemma-mm-3:
+    type: multimodal              # -> MultimodalEmbedder (mean-pooled hidden states)
+    model_name: google/gemma-3-8b-it
+    api: vlm_pool
+    embedding_dim: 512
+    matryoshka: false
+    pooling: mean                 # "mean" | "last"
+    max_text_length: 128
+    image_prompt: "A meme image."
+    normalize: true
+    # Image inputs go through the processor chat template (correct image-token
+    # expansion). Override the loader class if needed:
+    # model_class: AutoModelForImageTextToText   # default try order; then AutoModel
+
+  # ---- Template for your own custom model -----------------------------------
+  # my-custom-model:
+  #   type: clip                  # or "multimodal"
+  #   model_name: your-org/your-clip-model
+  #   api: clip_features
+  #   embedding_dim: 512
+  #   trust_remote_code: false

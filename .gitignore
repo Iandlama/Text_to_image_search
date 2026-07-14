@@ -1,4 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info
+build/
+
+# Dataset-based
 meme_dataset/
 *.zip
 .DS_Store
-__pycache__/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyCharm / IntelliJ IDE
+.idea/
+
+# VS Code IDE
+.vscode/

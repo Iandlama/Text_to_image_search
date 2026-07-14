@@ -6,6 +6,7 @@ __pycache__/
 build/
 data/images/
 data/embeddings_v1.parquet
+data/embeddings_v2.parquet
 
 # Dataset-based
 meme_dataset/

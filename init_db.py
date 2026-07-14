@@ -6,7 +6,7 @@ QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 client = QdrantClient(host=QDRANT_HOST, grpc_port=6334, prefer_grpc=True)
 
 COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "meme_collection_v1")
-
+EMBEDDING_DIMENSIONS = 256
 
 def setup_meme_collection():
     if client.collection_exists(collection_name=COLLECTION_NAME):
@@ -16,9 +16,9 @@ def setup_meme_collection():
     client.create_collection(
         collection_name=COLLECTION_NAME,
         vectors_config={
-            "vector_image": VectorParams(size=512, distance=Distance.COSINE),
+            "vector_image": VectorParams(size=EMBEDDING_DIMENSIONS, distance=Distance.COSINE),
 
-            "vector_text": VectorParams(size=512, distance=Distance.COSINE)
+            "vector_text": VectorParams(size=EMBEDDING_DIMENSIONS, distance=Distance.COSINE)
         }
     )
     print(f"Collection '{COLLECTION_NAME}' has successfully created!")

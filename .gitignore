@@ -5,6 +5,7 @@ __pycache__/
 *.egg-info
 build/
 data/images/
+data/embeddings_v1.parquet
 
 # Dataset-based
 meme_dataset/

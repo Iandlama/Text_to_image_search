@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 *.egg-info
 build/
-images/
+data/images/
 
 # Dataset-based
 meme_dataset/

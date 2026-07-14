@@ -2,13 +2,15 @@ import os
 import sys
 
 # настройка относительных путей
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+#CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+#ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
+#if ROOT_DIR not in sys.path:
+#    sys.path.insert(0, ROOT_DIR)
 
-IMAGES_DIR = os.path.join(ROOT_DIR, "data", "images") # директория с мемами
+#IMAGES_DIR = os.path.join(ROOT_DIR, "data", "images")
+
+IMAGES_DIR = os.path.join(os.getcwd(), "data", "images") # директория с мемами
 
 import torch
 from fastapi import FastAPI, HTTPException, Query
@@ -31,7 +33,8 @@ QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_GRPC_PORT = int(os.getenv("QDRANT_GRPC_PORT", 6334)) # Используем gRPC порт 6334 (быстрее, стабильнее http)
 COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "meme_collection_v1") # название коллекции Qdrant
 
-qdrant_client = QdrantClient(host=QDRANT_HOST, grpc_port=QDRANT_GRPC_PORT, prefer_grpc=True)
+qdrant_client = QdrantClient(host=QDRANT_HOST, grpc_port=6334, prefer_grpc=True)
+#qdrant_client = QdrantClient(host=QDRANT_HOST, grpc_port=QDRANT_GRPC_PORT, prefer_grpc=True)
 
 # подготовка jinja-clip v2
 try:

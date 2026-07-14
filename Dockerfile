@@ -6,23 +6,27 @@ WORKDIR /workspace
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential && rm -rf /var/lib/apt/lists/*
 
-# 1. Установка базовых библиотек (добавили transformers и accelerate)
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir jinja2 typing-extensions filelock networkx fsspec uvicorn fastapi \
-    transformers accelerate
+# 1. Обновляем pip
+RUN pip install --no-cache-dir --upgrade pip
 
-# 2. Установка PyTorch (cpu-версия)
-RUN pip install --no-cache-dir --default-timeout=1000 --retries 10 torch --index-url https://download.pytorch.org/whl/cpu
+# 2. Устанавливаем CPU-версии PyTorch И Torchvision
+RUN pip install --no-cache-dir --default-timeout=1000 --retries 10 \
+    torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# 3. Установка остальных зависимостей из файла
+# 3. Очищаем requirements.txt от конфликтующих библиотек и ставим остальные
 COPY requirements.txt .
 RUN sed -i '/torch/d' requirements.txt && \
+    sed -i '/torchvision/d' requirements.txt && \
     sed -i '/transformers/d' requirements.txt && \
-    sed -i '/accelerate/d' requirements.txt && \
     pip install --no-cache-dir --default-timeout=1000 --retries 10 -r requirements.txt
 
-# Копируем остальной код
-COPY . .
+# 4. Устанавливаем СОВМЕСТИМУЮ версию transformers (4.43.3) и сопутствующие пакеты
+RUN pip install --no-cache-dir -U \
+    huggingface_hub "transformers==4.43.3" accelerate fastapi uvicorn jinja2 timm einops Pillow
+
+# Копируем код
+COPY app/ ./app/
+COPY meme_embed/ ./meme_embed/
 
 ENV PYTHONPATH=/workspace
 

@@ -1,0 +1,8 @@
+model,dim,test,channel,recall@1,recall@5,recall@10,mrr,ndcg@10,median_rank,img_ocr_overlap@10,img_ocr_alignment_cos,text2image_recall@1,random_recall@1,quality,content_cos,identity_recall@1,identity_recall@5,downstream_recall@1,downstream_mrr,artifact_cluster_ratio
+clip-openai-b32,512,space_consistency,diagnostic,,,,,,,0.0362,0.2484,0.51,0.005,,,,,,,
+clip-openai-b16,512,space_consistency,diagnostic,,,,,,,0.0435,0.2558,0.64,0.005,,,,,,,
+laion-clip-b32,512,space_consistency,diagnostic,,,,,,,0.0281,0.1932,0.56,0.005,,,,,,,
+metaclip-b32,512,space_consistency,diagnostic,,,,,,,0.0302,0.2221,0.42,0.005,,,,,,,
+siglip2-b16-256,512,space_consistency,diagnostic,,,,,,,0.0383,0.0921,0.4,0.005,,,,,,,
+jina-clip-v2,512,space_consistency,diagnostic,,,,,,,0.0299,0.1716,0.46,0.005,,,,,,,
+jina-clip-v1,512,space_consistency,diagnostic,,,,,,,0.0334,0.0856,0.45,0.005,,,,,,,

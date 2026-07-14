@@ -1,9 +1,12 @@
+import os
 import time
 import uuid
 import pandas as pd
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARQUET_FILE_PATH = os.path.join(CURRENT_DIR, "data", "embeddings_v1.parquet")
 
 client = QdrantClient(host="localhost", grpc_port=6334, prefer_grpc=True)
 COLLECTION_NAME = "meme_collection_v1"
@@ -12,6 +15,9 @@ NAMESPACE_MEMES = uuid.UUID('12345678-1234-5678-1234-567812345678')
 
 
 def upload_parquet_dataset(parquet_path, batch_size=1000):
+    if not os.path.exists(parquet_path):
+        raise FileNotFoundError(f"Файл датасета не найден по пути: {parquet_path}")
+
     print(f"Reading dataset from {parquet_path}...")
     start_time = time.time()
 
@@ -44,28 +50,23 @@ def upload_parquet_dataset(parquet_path, batch_size=1000):
         points.append(point)
 
         if len(points) == batch_size:
-            client.upsert(collection_name=COLLECTION_NAME,
-                          points=points, wait=False)
+            client.upsert(collection_name=COLLECTION_NAME, points=points, wait=False)
             batch_counter += 1
 
             if batch_counter % 10 == 0:
                 elapsed = time.time() - start_time
                 processed = batch_counter * batch_size
-                print(
-                    f"Uploaded: {processed}/{total_rows} rows. Time elapsed: {elapsed:.1f}s")
+                print(f"Uploaded: {processed}/{total_rows} rows. Time elapsed: {elapsed:.1f}s")
 
             points = []
 
     if points:
-        client.upsert(collection_name=COLLECTION_NAME,
-                      points=points, wait=False)
+        client.upsert(collection_name=COLLECTION_NAME, points=points, wait=False)
         print(f"Uploaded final batch of {len(points)} rows.")
 
     total_time = time.time() - start_time
-    print(
-        f"Successfully ingested all {total_rows} elements into Qdrant in {total_time:.1f}s!")
+    print(f"Successfully ingested all {total_rows} elements into Qdrant in {total_time:.1f}s!")
 
 
 if __name__ == "__main__":
-    PARQUET_FILE = "embeddings_v1.parquet"
-    upload_parquet_dataset(PARQUET_FILE)
+    upload_parquet_dataset(PARQUET_FILE_PATH)

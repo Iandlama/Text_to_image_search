@@ -25,7 +25,6 @@ def upload_parquet_dataset(parquet_path, batch_size=1000):
 
     df = pd.read_parquet(parquet_path, engine="pyarrow")
     total_rows = len(df)
-    print(f"Total records found: {total_rows}")
 
     points = []
     batch_counter = 0
@@ -58,16 +57,13 @@ def upload_parquet_dataset(parquet_path, batch_size=1000):
             if batch_counter % 10 == 0:
                 elapsed = time.time() - start_time
                 processed = batch_counter * batch_size
-                print(f"Uploaded: {processed}/{total_rows} rows. Time elapsed: {elapsed:.1f}s")
 
             points = []
 
     if points:
         client.upsert(collection_name=COLLECTION_NAME, points=points, wait=False)
-        print(f"Uploaded final batch of {len(points)} rows.")
 
     total_time = time.time() - start_time
-    print(f"Successfully ingested all {total_rows} elements into Qdrant in {total_time:.1f}s!")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# DLS_project
+# Meme Semantic Search
 
 Text-to-image search over memes. Each meme is an image (`images/{id}.webp`)
 paired with textual signals for retrieval in `metadata.jsonl`.
